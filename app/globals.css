@@ -1,0 +1,340 @@
+@import "tailwindcss";
+
+/* ===== friction log デザイン（モックアップ friction-log.html から移植） ===== */
+:root {
+  --bg: #faf9f5;
+  --surface: #ffffff;
+  --surface-2: #f2f0e9;
+  --border: #e4e1d7;
+  --border-strong: #cfccc0;
+  --text: #2b2a26;
+  --text-2: #6b6a63;
+  --text-3: #9a988e;
+  --accent: #c2602f;
+  --accent-bg: #fbeee6;
+  --warn: #b8860b;
+  --warn-bg: #fcf3da;
+  --ok: #3b7d4f;
+  --ok-bg: #e9f4ec;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1f1e1b;
+    --surface: #2a2925;
+    --surface-2: #333128;
+    --border: #3d3b34;
+    --border-strong: #514e44;
+    --text: #ece9e0;
+    --text-2: #b3b1a7;
+    --text-3: #84827a;
+    --accent: #e08b5a;
+    --accent-bg: #3a2a20;
+    --warn: #e3b341;
+    --warn-bg: #3a3320;
+    --ok: #7bc08c;
+    --ok-bg: #233028;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans",
+    "Yu Gothic UI", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.app {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 20px 60px;
+}
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 600;
+}
+.logo .flame {
+  font-size: 20px;
+}
+.week {
+  font-size: 12px;
+  color: var(--text-3);
+}
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  background: var(--surface-2);
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  width: fit-content;
+}
+.tab {
+  font-size: 14px;
+  padding: 7px 18px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+  font-family: inherit;
+}
+.tab.active {
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+.input-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.input-row input {
+  flex: 1;
+  font-size: 14px;
+  padding: 0 14px;
+  height: 42px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+}
+.input-row input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.btn {
+  height: 42px;
+  padding: 0 18px;
+  font-size: 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn:hover {
+  background: var(--surface-2);
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+.btn-primary:hover {
+  opacity: 0.9;
+  background: var(--accent);
+}
+.btn-sm {
+  height: 34px;
+  padding: 0 14px;
+  font-size: 13px;
+}
+.alert-banner {
+  background: var(--warn-bg);
+  border: 1px solid var(--warn);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  margin-bottom: 14px;
+  font-size: 14px;
+  color: var(--warn);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: slideIn 0.3s ease;
+}
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.section-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-3);
+  letter-spacing: 0.04em;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+.log-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.log-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.log-item.hot {
+  border-color: var(--warn);
+  background: var(--warn-bg);
+}
+.log-item.done {
+  opacity: 0.55;
+}
+.log-text {
+  font-size: 14px;
+  flex: 1;
+}
+.log-item.done .log-text {
+  text-decoration: line-through;
+}
+.log-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.count-badge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: var(--surface-2);
+  color: var(--text-2);
+}
+.count-badge.hot {
+  background: var(--warn);
+  color: #fff;
+}
+.log-date {
+  font-size: 12px;
+  color: var(--text-3);
+  min-width: 34px;
+  text-align: right;
+}
+.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-3);
+  font-size: 16px;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+.icon-btn:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+.empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-3);
+  font-size: 14px;
+}
+.rank {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent);
+  width: 22px;
+  flex-shrink: 0;
+}
+.report-box {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.7;
+  white-space: pre-wrap;
+  font-family: "SF Mono", Consolas, "Yu Gothic", monospace;
+  margin-top: 8px;
+  max-height: 360px;
+  overflow-y: auto;
+}
+.report-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--text);
+  color: var(--bg);
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 13px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s;
+  z-index: 100;
+}
+.toast.show {
+  opacity: 1;
+}
+.hint {
+  font-size: 12px;
+  color: var(--text-3);
+  margin-bottom: 16px;
+}
+.scoring-controls {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+.chip {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-2);
+  cursor: pointer;
+}
+.chip.on {
+  background: var(--accent-bg);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.soron-note {
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 8px;
+}
