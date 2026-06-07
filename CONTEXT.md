@@ -88,7 +88,7 @@ lib/
 - [x] コピーボタンでレポート全文をクリップボードへ
 - [x] レポート生成時に Haiku が優先度の総評を返す（APIキー設定時）
 - [x] ブラウザ再起動後もデータが残る（KV/ファイルに永続化）
-- [ ] Vercel にデプロイして URL で PC・スマホ両方から開ける ← **デプロイ作業で確認**
+- [x] Vercel にデプロイして URL で PC・スマホ両方から開ける（https://daily-work-inventory.vercel.app）
 
 ---
 
@@ -96,3 +96,6 @@ lib/
 - 2026-06-07 初版。モックアップ `friction-log.html` を Next.js + TS + Tailwind に移植。
   KV（Upstash）／ファイル fallback のストア層、API Routes 経由の CRUD、Haiku 総評つき週次レポートを実装。
   ローカルでビルド・API のエンドツーエンド動作確認まで完了。
+- 2026-06-07 Vercel 本番デプロイ完了（https://daily-work-inventory.vercel.app）。
+  Upstash for Redis（東京リージョン・Free）を接続し、本番でKV永続化の動作確認済み。
+  受け入れ条件すべてクリア。
