@@ -5,7 +5,8 @@
 この「気づけない不便」を **記録 → 集計 → 改善ループ** に乗せて顕在化させる、個人用（非商用・一人用）ツール。
 
 不便を1行で記録 → 同じ内容が3回たまると「改善候補」に昇格 → 週次レポートで TOP5 を出し、
-Haiku の総評つきで Claude に貼って `friction-to-prd` スキルへ繋げる、までが一連の流れ。
+Gemini の総評つきで Claude に貼って `friction-to-prd` スキルへ繋げる、までが一連の流れ。
+**運用コストは全部無料枠**（Vercel Hobby / Upstash Free / Gemini API 無料枠）。
 
 ---
 
@@ -17,7 +18,8 @@ npm install
 npm run dev          # http://localhost:3000
 ```
 - **Upstash の認証情報なしでもすぐ動く。** その場合データは `.data/entries.json`（gitignore済み）に保存される。
-- Haiku 総評を試したい場合は `.env.local` に `ANTHROPIC_API_KEY` を入れる（未設定でもレポート本文は出る／総評だけスキップ）。
+- Gemini 総評を試したい場合は `.env.local` に `GEMINI_API_KEY` を入れる（未設定でもレポート本文は出る／総評だけスキップ）。
+  キーは https://aistudio.google.com/apikey で **無料発行（クレカ不要）** できる。
 
 ```bash
 cp .env.local.example .env.local   # 必要な値を埋める
@@ -43,7 +45,7 @@ cp .env.local.example .env.local   # 必要な値を埋める
 | デザイン | モックアップ `friction-log.html` の CSS を `app/globals.css` に移植（ダークモード対応そのまま） |
 | データ保存 | `lib/store.ts` がサーバー側で吸収。**Upstash Redis（Vercel KV）** が設定されていればそれ、無ければ **ローカルファイル** にfallback |
 | API | Next.js API Routes 経由（クライアントから直接 KV / API キーを触らせない） |
-| AI | Anthropic API（`claude-haiku-4-5`）。週次レポート生成時に1回だけ呼ぶ＝コスト最小 |
+| AI | Google Gemini API（デフォルト `gemini-2.5-flash-lite`、`GEMINI_MODEL` で変更可）。SDKなしのREST直叩き。週次レポート生成時に1回だけ呼ぶ＝AI Studio の無料枠内で運用（クレカ不要） |
 
 ### 同一判定（`lib/match.ts`）
 モックアップ同様のキーワードマッチ。先頭6文字の包含 or 相互包含。AI 意味判定はしない。精度は使いながら調整する前提。
@@ -74,7 +76,7 @@ lib/
 2. **Vercel Marketplace から Upstash（Redis）を接続** する。
    - ※ Vercel KV は現在 Upstash Redis ベース。Marketplace 経由で接続すると `KV_REST_API_URL` / `KV_REST_API_TOKEN`（または `UPSTASH_REDIS_REST_URL/TOKEN`）が自動で環境変数に入る。`store.ts` は両方の命名に対応済み。
    - 最新の接続手順は接続時に Vercel 側で案内が出るので、それに従う。
-3. 環境変数に **`ANTHROPIC_API_KEY`** を追加（Haiku 総評用、サーバー側のみ）。
+3. 環境変数に **`GEMINI_API_KEY`** を追加（Gemini 総評用、サーバー側のみ。AI Studio で無料発行）。
 4. デプロイ。発行された URL を PC・スマホ両方で開いて動作確認。
 
 > ローカルのファイル fallback は開発専用。Vercel のサーバーレス環境はファイルシステムが永続しないため、**本番は必ず Upstash を接続すること**（未接続だとリクエストごとにデータが消える）。
@@ -88,13 +90,16 @@ lib/
 - [x] 週次レポートに3回以上の項目を回数順 TOP5 表示
 - [x] 頻度・コストをタップ切り替え＆保存
 - [x] コピーボタンでレポート全文をクリップボードへ
-- [x] レポート生成時に Haiku が優先度の総評を返す（APIキー設定時）
+- [x] レポート生成時に Gemini が優先度の総評を返す（APIキー設定時）
 - [x] ブラウザ再起動後もデータが残る（KV/ファイルに永続化）
 - [x] Vercel にデプロイして URL で PC・スマホ両方から開ける（https://daily-work-inventory.vercel.app）
 
 ---
 
 ## 更新履歴
+- 2026-06-11 総評AIを Anthropic（claude-haiku-4-5）→ Google Gemini（gemini-2.5-flash-lite）に移行。
+  無料運用を最優先とし、AI Studio の無料キー（クレカ不要）で動く構成に。SDK依存を外しREST直叩きに変更。
+  環境変数は `ANTHROPIC_API_KEY` → `GEMINI_API_KEY`（Vercel側の差し替えが必要）。
 - 2026-06-11 日常利用の摩擦を削減する改善。
   ＋1ワンタップ再記録（PATCH bump、3回昇格対応）／IME変換確定Enterの誤送信修正／
   入力オートフォーカス＋iOSフォーカスズーム防止（font-size 16px）／今日の記録数バッジ／

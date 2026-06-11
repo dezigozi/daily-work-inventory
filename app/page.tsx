@@ -351,7 +351,7 @@ export default function Home() {
               コピー用テキスト（Claudeに貼ってね）
             </div>
             <div className="report-box">
-              {reportLoading ? "総評を生成中…（Haiku）" : report}
+              {reportLoading ? "総評を生成中…（Gemini）" : report}
             </div>
             {soronNote && <div className="soron-note">※ {soronNote}</div>}
             <div className="report-actions">

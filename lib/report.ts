@@ -42,7 +42,7 @@ export function buildReportText(top: Entry[], soron?: string | null): string {
   });
 
   if (soron && soron.trim()) {
-    txt += `\n【総評（Haiku）】\n${soron.trim()}\n`;
+    txt += `\n【総評（Gemini）】\n${soron.trim()}\n`;
   }
 
   txt += `\n【メモ】\n回数が多くコストが小さいものから着手すると費用対効果が高い。`;
