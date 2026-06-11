@@ -45,7 +45,7 @@ cp .env.local.example .env.local   # 必要な値を埋める
 | デザイン | モックアップ `friction-log.html` の CSS を `app/globals.css` に移植（ダークモード対応そのまま） |
 | データ保存 | `lib/store.ts` がサーバー側で吸収。**Upstash Redis（Vercel KV）** が設定されていればそれ、無ければ **ローカルファイル** にfallback |
 | API | Next.js API Routes 経由（クライアントから直接 KV / API キーを触らせない） |
-| AI | Google Gemini API（デフォルト `gemini-2.5-flash-lite`、`GEMINI_MODEL` で変更可）。SDKなしのREST直叩き。週次レポート生成時に1回だけ呼ぶ＝AI Studio の無料枠内で運用（クレカ不要） |
+| AI | Google Gemini API（SDKなしのREST直叩き）。無料枠は **「1日あたりの回数×モデル別」** なので、(1) 総評はTOP5内容のハッシュでキャッシュしタブ開閉ではAPIを呼ばない、(2) 上限時は flash-lite → 2.5-flash → 2.0-flash へ自動フォールバック、(3) 全滅時も前回キャッシュを表示。`GEMINI_MODEL` でチェーン先頭を上書き可 |
 
 ### 同一判定（`lib/match.ts`）
 モックアップ同様のキーワードマッチ。先頭6文字の包含 or 相互包含。AI 意味判定はしない。精度は使いながら調整する前提。
@@ -97,6 +97,12 @@ lib/
 ---
 
 ## 更新履歴
+- 2026-06-11 Gemini無料枠（1日20回・モデル別）に合わせた総評の本質対策。
+  従来はレポートタブを開くたびにAPIを呼んでいたため1日で枠が尽きる設計だった。
+  (1) TOP5内容のハッシュによるサーバー側キャッシュ（内容不変ならAPI呼び出しゼロ、再生成ボタンのみ強制生成）、
+  (2) 枠超過時のモデル自動フォールバック（flash-lite → 2.5-flash → 2.0-flash、枠はモデル別なので有効）、
+  (3) 全モデル枠切れ時も前回キャッシュ表示＋日本語の説明メッセージ。
+  フォールバック・キャッシュヒット・強制再生成の3パターンをローカルで実証済み。
 - 2026-06-11 総評AIを Anthropic（claude-haiku-4-5）→ Google Gemini（gemini-2.5-flash-lite）に移行。
   無料運用を最優先とし、AI Studio の無料キー（クレカ不要）で動く構成に。SDK依存を外しREST直叩きに変更。
   環境変数は `ANTHROPIC_API_KEY` → `GEMINI_API_KEY`（Vercel側の差し替えが必要）。

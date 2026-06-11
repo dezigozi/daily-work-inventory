@@ -4,19 +4,26 @@ import path from "path";
 import type { Entry } from "./types";
 
 const STORE_KEY = "frictionLog:entries:v1";
+const SORON_CACHE_KEY = "frictionLog:soronCache:v1";
+
+/** ローカルfallback時のキー→ファイル名対応（entries.json は初版からの互換維持） */
+const FILE_NAMES: Record<string, string> = {
+  [STORE_KEY]: "entries.json",
+  [SORON_CACHE_KEY]: "soron-cache.json",
+};
 
 /**
  * データ層。サーバー側のみで動く（クライアントから直接 KV / API キーを触らせない）。
  *
  * - 本番（Vercel）: Upstash Redis（Vercel KV）を使う。
  *   環境変数 KV_REST_API_URL / KV_REST_API_TOKEN が入っていれば自動でこちら。
- * - ローカル開発: 上記が無ければ .data/entries.json に保存するfallback。
+ * - ローカル開発: 上記が無ければ .data/ 配下のJSONに保存するfallback。
  *   Upstash の認証情報なしでもすぐ動かせる。
  */
 
 interface Backend {
-  load(): Promise<Entry[]>;
-  save(entries: Entry[]): Promise<void>;
+  get(key: string): Promise<unknown>;
+  set(key: string, value: unknown): Promise<void>;
 }
 
 // ---- Upstash Redis backend ----
@@ -32,12 +39,11 @@ function makeRedisBackend(): Backend | null {
   const redis = new Redis({ url, token });
 
   return {
-    async load() {
-      const data = await redis.get<Entry[]>(STORE_KEY);
-      return Array.isArray(data) ? data : [];
+    async get(key) {
+      return redis.get(key);
     },
-    async save(entries) {
-      await redis.set(STORE_KEY, entries);
+    async set(key, value) {
+      await redis.set(key, value);
     },
   };
 }
@@ -45,20 +51,19 @@ function makeRedisBackend(): Backend | null {
 // ---- Local file backend (dev fallback) ----
 function makeFileBackend(): Backend {
   const dir = path.join(process.cwd(), ".data");
-  const file = path.join(dir, "entries.json");
+  const fileFor = (key: string) =>
+    path.join(dir, FILE_NAMES[key] ?? `${key.replace(/[^\w-]/g, "_")}.json`);
   return {
-    async load() {
+    async get(key) {
       try {
-        const raw = await fs.readFile(file, "utf8");
-        const data = JSON.parse(raw);
-        return Array.isArray(data) ? data : [];
+        return JSON.parse(await fs.readFile(fileFor(key), "utf8"));
       } catch {
-        return [];
+        return null;
       }
     },
-    async save(entries) {
+    async set(key, value) {
       await fs.mkdir(dir, { recursive: true });
-      await fs.writeFile(file, JSON.stringify(entries, null, 2), "utf8");
+      await fs.writeFile(fileFor(key), JSON.stringify(value, null, 2), "utf8");
     },
   };
 }
@@ -76,10 +81,34 @@ export function usingRedis(): boolean {
   return Boolean(url && token);
 }
 
-export function loadEntries(): Promise<Entry[]> {
-  return getBackend().load();
+export async function loadEntries(): Promise<Entry[]> {
+  const data = await getBackend().get(STORE_KEY);
+  return Array.isArray(data) ? (data as Entry[]) : [];
 }
 
 export function saveEntries(entries: Entry[]): Promise<void> {
-  return getBackend().save(entries);
+  return getBackend().set(STORE_KEY, entries);
+}
+
+// ---- 週次レポート総評のキャッシュ ----
+// TOP5の内容が変わらない限りGeminiを呼び直さないための保存領域。
+// 無料枠（1日あたり・モデル別の回数制限）をタブ開閉で浪費しないことが目的。
+
+export interface SoronCache {
+  /** TOP5内容のハッシュ。一致すればキャッシュ有効 */
+  hash: string;
+  soron: string;
+  /** 生成に使ったモデル名 */
+  model: string;
+}
+
+export async function loadSoronCache(): Promise<SoronCache | null> {
+  const data = (await getBackend().get(SORON_CACHE_KEY)) as SoronCache | null;
+  return data && typeof data.hash === "string" && typeof data.soron === "string"
+    ? data
+    : null;
+}
+
+export function saveSoronCache(cache: SoronCache): Promise<void> {
+  return getBackend().set(SORON_CACHE_KEY, cache);
 }

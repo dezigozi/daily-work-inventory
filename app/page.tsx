@@ -139,12 +139,18 @@ export default function Home() {
     if (res.ok) setEntries(data.entries ?? []);
   }
 
-  // ===== レポート生成（Haiku総評つき） =====
-  async function genReport() {
+  // ===== レポート生成（Gemini総評つき） =====
+  // タブを開いた時はサーバー側キャッシュを使う（TOP5が同じならAPIを呼ばない＝無料枠を消費しない）。
+  // 「再生成」ボタンの時だけ force でキャッシュを無視して生成し直す。
+  async function genReport(force = false) {
     setReportLoading(true);
     setSoronNote(null);
     try {
-      const res = await fetch("/api/report", { method: "POST" });
+      const res = await fetch("/api/report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ force }),
+      });
       const data = await res.json();
       setReport(data.report ?? "");
       if (data.soronError) setSoronNote(data.soronError);
@@ -364,7 +370,7 @@ export default function Home() {
               </button>
               <button
                 className="btn btn-sm"
-                onClick={genReport}
+                onClick={() => genReport(true)}
                 disabled={reportLoading}
               >
                 ↻ 再生成
