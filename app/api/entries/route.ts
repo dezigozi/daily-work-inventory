@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { loadEntries, saveEntries } from "@/lib/store";
-import { findSimilar, todayStr } from "@/lib/match";
+import { findSimilar, sortEntries, todayStr } from "@/lib/match";
 import type { Entry } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -8,8 +8,7 @@ export const dynamic = "force-dynamic";
 // GET /api/entries — 記録一覧（回数の多い順）
 export async function GET() {
   const entries = await loadEntries();
-  const sorted = [...entries].sort((a, b) => b.count - a.count);
-  return NextResponse.json({ entries: sorted });
+  return NextResponse.json({ entries: sortEntries(entries) });
 }
 
 // POST /api/entries — 記録追加（同一判定→既存なら+1、新規なら追加）
@@ -43,6 +42,5 @@ export async function POST(req: Request) {
   }
 
   await saveEntries(entries);
-  const sorted = [...entries].sort((a, b) => b.count - a.count);
-  return NextResponse.json({ entries: sorted, promoted });
+  return NextResponse.json({ entries: sortEntries(entries), promoted });
 }

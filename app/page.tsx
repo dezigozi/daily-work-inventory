@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Entry } from "@/lib/types";
 import { FREQ_JP, COST_JP } from "@/lib/types";
 import { getTop5, weekNo } from "@/lib/report";
+import { todayStr } from "@/lib/match";
 
 type Tab = "log" | "report";
 
@@ -15,6 +16,8 @@ export default function Home() {
   const [toast, setToast] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
+  const [busyId, setBusyId] = useState<number | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // レポート関連
   const [report, setReport] = useState("");
@@ -67,6 +70,7 @@ export default function Home() {
         setEntries(data.entries ?? []);
         setInput("");
         if (data.promoted) showAlert(data.promoted);
+        else showToast("記録した！🖊️");
       } else {
         showToast(data.error ?? "保存に失敗したで");
       }
@@ -74,10 +78,42 @@ export default function Home() {
       showToast("通信エラーやで");
     } finally {
       setAdding(false);
+      inputRef.current?.focus();
+    }
+  }
+
+  // ===== ワンタップ再記録（+1） =====
+  async function bumpEntry(id: number) {
+    if (busyId !== null) return;
+    setBusyId(id);
+    try {
+      const res = await fetch(`/api/entries/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bump: true }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setEntries(data.entries ?? []);
+        if (data.promoted) showAlert(data.promoted);
+        else showToast("＋1 記録したで 🔥");
+      }
+    } catch {
+      showToast("通信エラーやで");
+    } finally {
+      setBusyId(null);
     }
   }
 
   async function delEntry(id: number) {
+    const target = entries.find((e) => e.id === id);
+    if (
+      target &&
+      target.count >= 2 &&
+      !window.confirm(`「${target.text}」（${target.count}回）を削除する？`)
+    ) {
+      return;
+    }
     const res = await fetch(`/api/entries/${id}`, { method: "DELETE" });
     const data = await res.json();
     if (res.ok) setEntries(data.entries ?? []);
@@ -136,6 +172,7 @@ export default function Home() {
   }
 
   const top5 = getTop5(entries);
+  const todayCount = entries.filter((e) => e.date === todayStr()).length;
 
   return (
     <div className="app">
@@ -143,7 +180,12 @@ export default function Home() {
         <div className="logo">
           <span className="flame">🔥</span> friction log
         </div>
-        <div className="week">{weekLabel}</div>
+        <div className="week">
+          {todayCount > 0 && (
+            <span className="today-badge">今日 {todayCount}件 🔥</span>
+          )}
+          {weekLabel}
+        </div>
       </header>
 
       <div className="tabs">
@@ -166,12 +208,15 @@ export default function Home() {
         <div>
           <div className="input-row">
             <input
+              ref={inputRef}
               type="text"
               value={input}
+              autoFocus
               placeholder="今日不便だったことを1行で…"
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter") addEntry();
+                // IME変換確定のEnterでは送信しない
+                if (e.key === "Enter" && !e.nativeEvent.isComposing) addEntry();
               }}
             />
             <button
@@ -183,7 +228,8 @@ export default function Home() {
             </button>
           </div>
           <div className="hint">
-            同じ内容を 3回 記録すると「改善候補」に昇格するで。
+            同じ内容を 3回 記録すると「改善候補」に昇格するで。2回目からは{" "}
+            <strong>＋1</strong> をタップするだけでOK！
           </div>
 
           {alert && (
@@ -221,6 +267,16 @@ export default function Home() {
                       {e.count}回
                     </span>
                     <span className="log-date">{e.date}</span>
+                    {!e.done && (
+                      <button
+                        className="bump-btn"
+                        title="同じ不便がまた起きた（+1）"
+                        onClick={() => bumpEntry(e.id)}
+                        disabled={busyId === e.id}
+                      >
+                        ＋1
+                      </button>
+                    )}
                     <button
                       className="icon-btn"
                       title="完了"

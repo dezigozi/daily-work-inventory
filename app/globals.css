@@ -112,7 +112,8 @@ header {
 }
 .input-row input {
   flex: 1;
-  font-size: 14px;
+  /* 16px未満だとiOS Safariがフォーカス時に画面をズームしてしまう */
+  font-size: 16px;
   padding: 0 14px;
   height: 42px;
   border-radius: var(--radius-sm);
@@ -337,4 +338,50 @@ header {
   font-size: 11px;
   color: var(--text-3);
   margin-top: 8px;
+}
+.bump-btn {
+  height: 28px;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 14px;
+  border: 1px solid var(--accent);
+  background: var(--accent-bg);
+  color: var(--accent);
+  cursor: pointer;
+  font-family: inherit;
+  flex-shrink: 0;
+}
+.bump-btn:hover {
+  background: var(--accent);
+  color: #fff;
+}
+.bump-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.today-badge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-bg);
+  border-radius: 12px;
+  padding: 2px 10px;
+  margin-right: 8px;
+}
+/* スマホはタップ領域を広めに */
+@media (max-width: 480px) {
+  .icon-btn {
+    font-size: 18px;
+    padding: 6px 8px;
+  }
+  .bump-btn {
+    height: 36px;
+    padding: 0 16px;
+    font-size: 14px;
+  }
+  .log-date {
+    display: none;
+  }
 }

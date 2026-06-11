@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { loadEntries, saveEntries } from "@/lib/store";
+import { sortEntries, todayStr } from "@/lib/match";
 import type { Cost, Entry, Freq } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +13,7 @@ function cycle<T>(order: T[], current: T): T {
   return order[(i + 1) % order.length];
 }
 
-// PATCH /api/entries/[id] — 頻度/コストの切り替え・完了トグル
+// PATCH /api/entries/[id] — 頻度/コストの切り替え・完了トグル・+1再記録
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -22,6 +23,7 @@ export async function PATCH(
   const body = (await req.json().catch(() => ({}))) as {
     cycle?: "freq" | "cost";
     done?: boolean;
+    bump?: boolean;
   };
 
   const entries = await loadEntries();
@@ -30,13 +32,19 @@ export async function PATCH(
     return NextResponse.json({ error: "not found" }, { status: 404 });
   }
 
+  let promoted: string | null = null;
+
   if (body.cycle === "freq") entry.freq = cycle(FREQ_ORDER, entry.freq);
   else if (body.cycle === "cost") entry.cost = cycle(COST_ORDER, entry.cost);
   if (typeof body.done === "boolean") entry.done = body.done;
+  if (body.bump) {
+    entry.count += 1;
+    entry.date = todayStr(0);
+    if (entry.count === 3) promoted = entry.text;
+  }
 
   await saveEntries(entries);
-  const sorted = [...entries].sort((a, b) => b.count - a.count);
-  return NextResponse.json({ entries: sorted });
+  return NextResponse.json({ entries: sortEntries(entries), promoted });
 }
 
 // DELETE /api/entries/[id] — 記録削除
@@ -50,6 +58,5 @@ export async function DELETE(
   const entries = await loadEntries();
   const next: Entry[] = entries.filter((e) => e.id !== numId);
   await saveEntries(next);
-  const sorted = [...next].sort((a, b) => b.count - a.count);
-  return NextResponse.json({ entries: sorted });
+  return NextResponse.json({ entries: sortEntries(next) });
 }

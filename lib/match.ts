@@ -16,6 +16,13 @@ export function findSimilar(entries: Entry[], text: string): Entry | undefined {
   });
 }
 
+/** 一覧表示用ソート：未完了が上、回数の多い順 */
+export function sortEntries(entries: Entry[]): Entry[] {
+  return [...entries].sort(
+    (a, b) => Number(a.done) - Number(b.done) || b.count - a.count,
+  );
+}
+
 /** "M/D" 形式の日付文字列。offset は今日からの日数。 */
 export function todayStr(offset = 0): string {
   const d = new Date();
